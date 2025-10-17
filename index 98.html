@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editable People Table</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background: #f7f7f7;
+  }
+  h2 {
+    text-align: center;
+    color: #333;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+  }
+  th {
+    background: #0078d7;
+    color: white;
+  }
+  button {
+    margin-top: 15px;
+    background: #0078d7;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #005fa3;
+  }
+  .delete-btn {
+    background: #ff4b4b;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .delete-btn:hover {
+    background: #c0392b;
+  }
+</style>
+</head>
+<body>
+
+<h2>People Record Table</h2>
+
+<table id="peopleTable">
+  <thead>
+    <tr>
+      <th>FULL NAME</th>
+      <th>CITY</th>
+      <th>SERVICE</th>
+      <th>PEOPLE</th>
+      <th>DATE</th>
+      <th class="admin-only">ACTION</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<div id="adminButtons" style="text-align:center;">
+  <button id="addRowBtn">+ Add New Row</button>
+</div>
+
+<script>
+  const tableBody = document.getElementById("tableBody");
+  const addRowBtn = document.getElementById("addRowBtn");
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdmin = urlParams.get('admin') === '1';
+
+  // Load data from localStorage
+  let data = JSON.parse(localStorage.getItem("peopleData")) || [];
+
+  function renderTable() {
+    tableBody.innerHTML = "";
+    data.forEach((row, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td contenteditable="${isAdmin}">${row.name}</td>
+        <td contenteditable="${isAdmin}">${row.city}</td>
+        <td contenteditable="${isAdmin}">${row.service}</td>
+        <td contenteditable="${isAdmin}">${row.people}</td>
+        <td contenteditable="${isAdmin}">${row.date}</td>
+        ${isAdmin ? `<td><button class="delete-btn" onclick="deleteRow(${index})">Delete</button></td>` : ""}
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  function saveData() {
+    const rows = tableBody.querySelectorAll("tr");
+    data = Array.from(rows).map(row => {
+      const cells = row.querySelectorAll("td");
+      return {
+        name: cells[0].innerText,
+        city: cells[1].innerText,
+        service: cells[2].innerText,
+        people: cells[3].innerText,
+        date: cells[4].innerText
+      };
+    });
+    localStorage.setItem("peopleData", JSON.stringify(data));
+  }
+
+  if (isAdmin) {
+    // Admin can add new rows
+    addRowBtn.addEventListener("click", () => {
+      data.push({ name: "New Name", city: "City", service: "Service", people: "People", date: new Date().toLocaleDateString() });
+      saveData();
+      renderTable();
+    });
+
+    // Save automatically when edited
+    tableBody.addEventListener("input", saveData);
+  } else {
+    // Hide admin features
+    document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
+    document.getElementById("adminButtons").style.display = "none";
+  }
+
+  function deleteRow(index) {
+    data.splice(index, 1);
+    saveData();
+    renderTable();
+  }
+
+  // Initial render
+  renderTable();
+</script>
+
+</body>
+</html>
