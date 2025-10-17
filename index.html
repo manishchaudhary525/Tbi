@@ -7,50 +7,92 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    margin: 40px;
-    background: #f7f7f7;
+    background: linear-gradient(180deg, #f4f4f4, #eaeaea);
+    margin: 0;
+    padding: 0;
   }
   h2 {
     text-align: center;
-    color: #333;
+    padding: 15px;
+    color: #222;
   }
   table {
-    width: 100%;
+    width: 95%;
+    max-width: 1000px;
+    margin: 20px auto;
     border-collapse: collapse;
-    background: white;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    background: linear-gradient(to bottom, #ffffff, #f2f2f2);
+    border-radius: 8px;
+    overflow: hidden;
   }
   th, td {
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 12px;
     text-align: center;
   }
   th {
-    background: #0078d7;
+    background: #0a74da;
     color: white;
+    font-weight: bold;
   }
-  button {
-    margin-top: 15px;
-    background: #0078d7;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #005fa3;
+  td img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
   }
   .delete-btn {
     background: #ff4b4b;
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 5px;
     cursor: pointer;
   }
   .delete-btn:hover {
     background: #c0392b;
+  }
+  button {
+    background: #0a74da;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 10px;
+    cursor: pointer;
+  }
+  button:hover { background: #075fb1; }
+
+  tr:hover {
+    background: #f0f8ff;
+    transition: 0.2s;
+  }
+
+  @media(max-width: 700px) {
+    table, thead, tbody, tr, th, td {
+      display: block;
+      width: 100%;
+    }
+    tr {
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background: white;
+    }
+    th {
+      display: none;
+    }
+    td {
+      text-align: left;
+      padding: 8px 0;
+    }
+    td::before {
+      content: attr(data-label);
+      font-weight: bold;
+      display: block;
+      color: #444;
+    }
   }
 </style>
 </head>
@@ -58,9 +100,14 @@
 
 <h2>People Record Table</h2>
 
+<div style="text-align:center;">
+  <button id="addRowBtn">+ Add New Row</button>
+</div>
+
 <table id="peopleTable">
   <thead>
     <tr>
+      <th>PHOTO</th>
       <th>FULL NAME</th>
       <th>CITY</th>
       <th>SERVICE</th>
@@ -72,17 +119,11 @@
   <tbody id="tableBody"></tbody>
 </table>
 
-<div id="adminButtons" style="text-align:center;">
-  <button id="addRowBtn">+ Add New Row</button>
-</div>
-
 <script>
   const tableBody = document.getElementById("tableBody");
   const addRowBtn = document.getElementById("addRowBtn");
-  const urlParams = new URLSearchParams(window.location.search);
-  const isAdmin = urlParams.get('admin') === '1';
+  const isAdmin = true;  // एडमिन मोड वाला बटन हमेशा सही काम करेगा
 
-  // Load data from localStorage
   let data = JSON.parse(localStorage.getItem("peopleData")) || [];
 
   function renderTable() {
@@ -90,11 +131,15 @@
     data.forEach((row, index) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td contenteditable="${isAdmin}">${row.name}</td>
-        <td contenteditable="${isAdmin}">${row.city}</td>
-        <td contenteditable="${isAdmin}">${row.service}</td>
-        <td contenteditable="${isAdmin}">${row.people}</td>
-        <td contenteditable="${isAdmin}">${row.date}</td>
+        <td data-label="PHOTO">
+          <img id="photo${index}" src="${row.photo || 'https://via.placeholder.com/60'}" alt="photo">
+          ${isAdmin ? `<input type="file" accept="image/*" capture="camera" onchange="uploadPhoto(event, ${index})">` : ""}
+        </td>
+        <td data-label="FULL NAME" contenteditable="${isAdmin}">${row.name}</td>
+        <td data-label="CITY" contenteditable="${isAdmin}">${row.city}</td>
+        <td data-label="SERVICE" contenteditable="${isAdmin}">${row.service}</td>
+        <td data-label="PEOPLE" contenteditable="${isAdmin}">${row.people}</td>
+        <td data-label="DATE" contenteditable="${isAdmin}">${row.date}</td>
         ${isAdmin ? `<td><button class="delete-btn" onclick="deleteRow(${index})">Delete</button></td>` : ""}
       `;
       tableBody.appendChild(tr);
@@ -103,34 +148,47 @@
 
   function saveData() {
     const rows = tableBody.querySelectorAll("tr");
-    data = Array.from(rows).map(row => {
+    data = Array.from(rows).map((row, idx) => {
       const cells = row.querySelectorAll("td");
       return {
-        name: cells[0].innerText,
-        city: cells[1].innerText,
-        service: cells[2].innerText,
-        people: cells[3].innerText,
-        date: cells[4].innerText
+        photo: row.querySelector("img").src,
+        name: cells[1].innerText,
+        city: cells[2].innerText,
+        service: cells[3].innerText,
+        people: cells[4].innerText,
+        date: cells[5].innerText
       };
     });
     localStorage.setItem("peopleData", JSON.stringify(data));
   }
 
-  if (isAdmin) {
-    // Admin can add new rows
-    addRowBtn.addEventListener("click", () => {
-      data.push({ name: "New Name", city: "City", service: "Service", people: "People", date: new Date().toLocaleDateString() });
-      saveData();
-      renderTable();
-    });
-
-    // Save automatically when edited
-    tableBody.addEventListener("input", saveData);
-  } else {
-    // Hide admin features
-    document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
-    document.getElementById("adminButtons").style.display = "none";
+  function uploadPhoto(event, index) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        data[index].photo = e.target.result;
+        saveData();
+        renderTable();
+      };
+      reader.readAsDataURL(file);
+    }
   }
+
+  addRowBtn.addEventListener("click", () => {
+    data.push({
+      photo: "",
+      name: "New Name",
+      city: "City",
+      service: "Service",
+      people: "People",
+      date: new Date().toLocaleDateString()
+    });
+    saveData();
+    renderTable();
+  });
+
+  tableBody.addEventListener("input", saveData);
 
   function deleteRow(index) {
     data.splice(index, 1);
@@ -138,7 +196,6 @@
     renderTable();
   }
 
-  // Initial render
   renderTable();
 </script>
 
