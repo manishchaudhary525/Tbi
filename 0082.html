@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>People Pulse Prodigy - Admin Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="bg-blue-600 text-white px-6 py-4">
+      <div class="flex flex-col items-center">
+        <h1 class="text-2xl md:text-3xl font-bold text-center">People Pulse Prodigy 🚀</h1>
+        <p class="text-center text-blue-100 mt-1">Admin Portal</p>
+      </div>
+    </div>
+
+    <!-- Add Row Button -->
+    <div class="px-6 py-4 flex justify-center">
+      <button id="addRowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg">
+        Add Row
+      </button>
+    </div>
+    
+    <!-- Table -->
+    <div class="overflow-x-auto p-4">
+      <table class="min-w-full divide-y divide-gray-200" id="peopleTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">People</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const tableBody = document.getElementById("tableBody");
+  const addRowBtn = document.getElementById("addRowBtn");
+
+  let data = JSON.parse(localStorage.getItem("peopleData")) || [];
+
+  function renderTable() {
+    tableBody.innerHTML = "";
+    data.forEach((row, index) => {
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-gray-50";
+      tr.innerHTML = `
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.name}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.city}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.service}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.people}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.date}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-center">
+          <button onclick="deleteRow(${index})" class="text-red-500 hover:text-red-700 p-1 rounded-full" title="Delete">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7H5m14 0l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6" />
+            </svg>
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    // Auto-save on content edit
+    document.querySelectorAll("#tableBody td[contenteditable='true']").forEach(cell => {
+      cell.removeEventListener("input", saveData);
+      cell.addEventListener("input", saveData);
+    });
+  }
+
+  function saveData() {
+    const rows = document.querySelectorAll("#tableBody tr");
+    data = Array.from(rows).map(row => {
+      const cells = row.querySelectorAll("td");
+      return {
+        name: cells[0].innerText.trim(),
+        city: cells[1].innerText.trim(),
+        service: cells[2].innerText.trim(),
+        people: cells[3].innerText.trim(),
+        date: cells[4].innerText.trim()
+      };
+    });
+    localStorage.setItem("peopleData", JSON.stringify(data));
+  }
+
+  window.deleteRow = function(index) {
+    if (confirm("Are you sure you want to delete this record?")) {
+      data.splice(index, 1);
+      saveData();
+      renderTable();
+    }
+  };
+
+  addRowBtn.addEventListener("click", () => {
+    data.push({
+      name: "New Name",
+      city: "City",
+      service: "Service",
+      people: "1",
+      date: new Date().toLocaleDateString()
+    });
+    saveData();
+    renderTable();
+  });
+
+  renderTable();
+});
+</script>
+</body>
+</html>
