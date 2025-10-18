@@ -1,157 +1,157 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>People Pulse Prodigy</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>People Pulse Prodigy</title>
 <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto">
-            <!-- Header -->
-            <div class="bg-blue-600 text-white px-6 py-4">
-                <div class="flex flex-col items-center">
-                    <img src="http://static.photos/office/120x120/42" alt="Logo" class="w-12 h-12 rounded-full mb-2">
-                    <h1 class="text-2xl md:text-3xl font-bold text-center">People Pulse Prodigy 🚀</h1>
-                    <p class="text-center text-blue-100 mt-1">Simple people management solution</p>
-                </div>
-            </div>
-<!-- Table Section -->
-            <div class="overflow-x-auto p-4">
-                <table class="min-w-full divide-y divide-gray-200" id="peopleTable">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">People</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider admin-only">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
-                </table>
-            </div>
-
-            <!-- Admin Controls -->
-            <div class="bg-gray-50 px-6 py-4 text-center" id="adminButtons">
-                <div class="flex justify-center space-x-4">
-                    <button id="addRowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition duration-200 flex items-center">
-                        <i data-feather="plus" class="mr-2"></i> Add Row
-                    </button>
-                    <button onclick="window.location.href='index.html'" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-200 flex items-center">
-                        <i data-feather="eye" class="mr-2"></i> Visitor View
-                    </button>
-                </div>
-</div>
-        </div>
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden max-w-6xl mx-auto">
+    <div class="bg-blue-600 text-white px-6 py-4">
+      <div class="flex flex-col items-center">
+        <h1 class="text-2xl md:text-3xl font-bold text-center">People Pulse Prodigy 🚀</h1>
+        <p class="text-center text-blue-100 mt-1" id="modeDescription">Loading...</p>
+      </div>
     </div>
 
-    <script>
-        const tableBody = document.getElementById("tableBody");
-        const addRowBtn = document.getElementById("addRowBtn");
-// Load data from localStorage
-        let data = JSON.parse(localStorage.getItem("peopleData")) || [
-            { name: "John Doe", city: "New York", service: "Consulting", people: "5", date: new Date().toLocaleDateString() },
-            { name: "Jane Smith", city: "Los Angeles", service: "Development", people: "8", date: new Date().toLocaleDateString() }
-        ];
+    <div id="adminControls" class="px-6 py-4 flex justify-center space-x-4" style="display:none;">
+      <button id="addRowBtn" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Add Row</button>
+    </div>
 
-        // Check if admin mode
-        const isAdmin = window.location.pathname.includes('/0082');
+    <div class="overflow-x-auto p-4">
+      <table class="min-w-full divide-y divide-gray-200" id="peopleTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">People</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" id="actionHeader" style="display:none;">Action</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const tableBody = document.getElementById("tableBody");
+const addRowBtn = document.getElementById("addRowBtn");
+const adminControls = document.getElementById("adminControls");
+const actionHeader = document.getElementById("actionHeader");
+const modeDescription = document.getElementById("modeDescription");
+
+let data = JSON.parse(localStorage.getItem("peopleData")) || [];
+
+// Detect admin mode by URL containing /0082
+const isAdmin = window.location.pathname.includes('/0082');
+
+modeDescription.innerText = isAdmin ? "Admin Portal" : "Visitor View";
+
 function renderTable() {
-            tableBody.innerHTML = "";
-            data.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap ${isAdmin ? 'border border-gray-200' : ''}" contenteditable="${isAdmin}">${row.name}</td>
-                    <td class="px-4 py-3 whitespace-nowrap ${isAdmin ? 'border border-gray-200' : ''}" contenteditable="${isAdmin}">${row.city}</td>
-                    <td class="px-4 py-3 whitespace-nowrap ${isAdmin ? 'border border-gray-200' : ''}" contenteditable="${isAdmin}">${row.service}</td>
-                    <td class="px-4 py-3 whitespace-nowrap ${isAdmin ? 'border border-gray-200' : ''}" contenteditable="${isAdmin}">${row.people}</td>
-                    <td class="px-4 py-3 whitespace-nowrap ${isAdmin ? 'border border-gray-200' : ''}" contenteditable="${isAdmin}">${row.date}</td>
-                    ${isAdmin ? `<td class="px-4 py-3 whitespace-nowrap text-center">
-                        <button onclick="deleteRow(${index})" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50">
-                            <i data-feather="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </td>` : ""}
-`;
-                tableBody.appendChild(tr);
-            });
-            feather.replace();
-        }
+  tableBody.innerHTML = "";
+  data.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-gray-50";
 
-        function saveData() {
-            const rows = tableBody.querySelectorAll("tr");
-            data = Array.from(rows).map(row => {
-                const cells = row.querySelectorAll("td");
-                return {
-                    name: cells[0].innerText,
-                    city: cells[1].innerText,
-                    service: cells[2].innerText,
-                    people: cells[3].innerText,
-                    date: cells[4].innerText
-                };
-            });
-            localStorage.setItem("peopleData", JSON.stringify(data));
-        }
-        if (isAdmin) {
-            document.title = "Admin Portal | People Pulse Prodigy";
-// Admin can add new rows
-            addRowBtn.addEventListener("click", () => {
-                data.push({ 
-                    name: "New Name", 
-                    city: "City", 
-                    service: "Service", 
-                    people: "1", 
-                    date: new Date().toLocaleDateString() 
-                });
-                saveData();
-                renderTable();
-            });
+    if (isAdmin) {
+      // Editable admin row with delete button
+      tr.innerHTML = `
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.name}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.city}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.service}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.people}</td>
+        <td class="px-4 py-3 whitespace-nowrap border border-gray-200" contenteditable="true">${row.date}</td>
+        <td class="px-4 py-3 whitespace-nowrap text-center">
+          <button onclick="deleteRow(${index})" class="text-red-500 hover:text-red-700 p-1 rounded-full" title="Delete">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7H5m14 0l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6" />
+            </svg>
+          </button>
+        </td>
+      `;
+    } else {
+      // Read-only visitor row
+      tr.innerHTML = `
+        <td class="px-4 py-3 whitespace-nowrap">${row.name}</td>
+        <td class="px-4 py-3 whitespace-nowrap">${row.city}</td>
+        <td class="px-4 py-3 whitespace-nowrap">${row.service}</td>
+        <td class="px-4 py-3 whitespace-nowrap">${row.people}</td>
+        <td class="px-4 py-3 whitespace-nowrap">${row.date}</td>
+      `;
+    }
+    tableBody.appendChild(tr);
+  });
 
-            // Save automatically when edited
-            tableBody.addEventListener("input", saveData);
-        } else {
-            // Hide admin features in visitor view
-            if (!isAdmin) {
-                document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
-                document.getElementById("adminButtons").style.display = "none";
-                document.querySelectorAll('[contenteditable="true"]').forEach(el => el.setAttribute('contenteditable', 'false'));
-            }
-        }
-        
-        // Responsive table styling
-        function handleResize() {
-            if (window.innerWidth < 640) {
-                document.querySelectorAll('th, td').forEach(el => {
-                    el.classList.add('px-2', 'py-1', 'text-xs');
-                });
-            } else {
-                document.querySelectorAll('th, td').forEach(el => {
-                    el.classList.remove('px-2', 'py-1', 'text-xs');
-                    el.classList.add('px-4', 'py-3');
-                });
-            }
-        }
-        
-        window.addEventListener('resize', handleResize);
-        handleResize();
+  if (isAdmin) {
+    // Add input listeners for auto-save
+    document.querySelectorAll("#tableBody td[contenteditable='true']").forEach(cell => {
+      cell.addEventListener("input", saveData);
+    });
+  }
+}
+
+function saveData() {
+  const rows = document.querySelectorAll("#tableBody tr");
+  data = Array.from(rows).map(row => {
+    const cells = row.querySelectorAll("td");
+    return {
+      name: cells[0].innerText.trim(),
+      city: cells[1].innerText.trim(),
+      service: cells[2].innerText.trim(),
+      people: cells[3].innerText.trim(),
+      date: cells[4].innerText.trim()
+    };
+  });
+  localStorage.setItem("peopleData", JSON.stringify(data));
+}
+
+// Delete a row
 function deleteRow(index) {
-            if (confirm("Are you sure you want to delete this record?")) {
-                data.splice(index, 1);
-                saveData();
-                renderTable();
-            }
-        }
+  if (confirm("Are you sure you want to delete this record?")) {
+    data.splice(index, 1);
+    saveData();
+    renderTable();
+  }
+}
 
-        // Initial render
-        renderTable();
-    </script>
-    <script>
-        feather.replace();
-    </script>
+// Add new row button event
+addRowBtn.addEventListener("click", () => {
+  data.push({
+    name: "New Name",
+    city: "City",
+    service: "Service",
+    people: "1",
+    date: new Date().toLocaleDateString()
+  });
+  saveData();
+  renderTable();
+});
+
+// Show admin controls based on mode
+if (isAdmin) {
+  adminControls.style.display = "flex";
+  actionHeader.style.display = "table-cell";
+} else {
+  adminControls.style.display = "none";
+  actionHeader.style.display = "none";
+}
+
+// Listen for storage changes for real-time sync
+window.addEventListener('storage', e => {
+  if (e.key === "peopleData") {
+    data = JSON.parse(e.newValue) || [];
+    renderTable();
+  }
+});
+
+// Initial render
+renderTable();
+</script>
 </body>
 </html>
